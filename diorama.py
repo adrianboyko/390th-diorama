@@ -1,12 +1,10 @@
 # diorama.py controls the synchronized LED effects and slide show for the 390th diorama.
-#
-# NeoPixel library strandtest example
-# Author: Tony DiCola (tony@tonydicola.com)
+# Adrian Boyko
 
 import time
+import pygame
 from subprocess import call, DEVNULL
 from neopixel import *
-
 
 # LED strip configuration:
 LED_COUNT      = 18      # Number of LED pixels.
@@ -16,13 +14,11 @@ LED_DMA        = 5       # DMA channel to use for generating signal (try 5)
 LED_BRIGHTNESS = 50      # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 
-
 ON_COLOR = Color(255, 0, 0)
 OFF_COLOR = Color(0, 0, 0)
 
 SLIDE_COUNT = 10
 LED_PATTERNS = {
-    0: [], # This is the startup pattern, not associated with any slide.
     1: [5,6,7,8], # LEDs 5, 6, and 7 should be lit for slide 1.
     # Since there is no pattern for slide 2, the pattern for slide 1 will persist.
     3: [12, 14], # LEDs 12 and 14 should be lit for slide 3. 
@@ -39,27 +35,39 @@ def show_slide_leds(strip, slidenum):
             strip.setPixelColor(i, color)
         strip.show()
  
-def show_slide_image(slidenum):
-    call(["pkill", "fbi"])
+def show_slide_image(screen, slidenum):
     filename = "slides/Slide{:02}.JPG".format(slidenum)
-    cmd = ["fbi", "--autozoom", "--vt", "1", "--noverbose", filename]
-    call(cmd, stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+    slide = pygame.image.load(filename)
+    slide_rect = slide.get_rect()
+    delta_x = (screen.get_width() - slide_rect.width) / 2.0
+    delta_y = (screen.get_height() - slide_rect.height) / 2.0
+    slide_rect.move_ip(delta_x, delta_y)
+    black = 0, 0, 0
+    screen.fill(black)
+    screen.blit(slide, slide_rect)
+    pygame.display.flip()
 
-def show_slide(strip, slidenum):
-    show_slide_image(slidenum)
+def show_slide(strip, screen, slidenum):
+    show_slide_image(screen, slidenum)
     show_slide_leds(strip, slidenum)
 
 if __name__ == '__main__':
-    # Create NeoPixel object with appropriate configuration.
-    strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
-    # Intialize the library (must be called once before other functions).
-    strip.begin()
 
-    print ('Press Ctrl-C to quit.')
+    # Initialize the neopixel strip.
+    strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+    strip.begin()
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, OFF_COLOR)
+
+    # Initialize pygame for image display.
+    pygame.init()
+    pygame.mouse.set_visible(0)
+    size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    print(size)
+    screen = pygame.display.set_mode(size)
 
     while True:
-        show_slide(strip, 0)
         for s in range(SLIDE_COUNT):
-            show_slide(strip, s+1)
+            show_slide(strip, screen, s+1)
             time.sleep(2)
 
