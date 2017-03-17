@@ -3,6 +3,7 @@
 
 import time
 import pygame
+import os
 from neopixel import *
 
 # LED strip configuration:
@@ -16,7 +17,6 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 ON_COLOR = Color(255, 0, 0)
 OFF_COLOR = Color(0, 0, 0)
 
-SLIDE_COUNT = 10
 LED_PATTERNS = {
     1: [5,6,7,8], # LEDs 5, 6, and 7 should be lit for slide 1.
     # Since there is no pattern for slide 2, the pattern for slide 1 will persist.
@@ -37,7 +37,7 @@ def show_slide_leds(strip, slidenum):
  
 def show_slide_image(screen, slidenum):
     filename = "slides/Slide{:02}.JPG".format(slidenum)
-    slide = pygame.image.load(filename)    
+    slide = pygame.image.load(filename)
     slide_rect = slide.get_rect()
 
     # Resize the images to the screen.
@@ -78,9 +78,8 @@ if __name__ == '__main__':
     pygame.mouse.set_visible(0)
     size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
     screen = pygame.display.set_mode(size)
-
+    slide_count = len(os.listdir("slides"))
     while True:
-        for s in range(SLIDE_COUNT):
+        for s in range(slide_count):
             show_slide(strip, screen, s+1)
             time.sleep(5)
-
